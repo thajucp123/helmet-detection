@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { client } from "https://esm.sh/@gradio/client";
-import './app.css';
+import './App.css';
 
 const SPACE_URL = import.meta.env.VITE_SPACE_URL;
 
