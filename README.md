@@ -216,5 +216,5 @@ numpy
 **Author: Thaju**
 
 📧 Email: thajucp123@gmail.com <br/>
-💼 LinkedIn: linkedin.com/in/thaju-fakrudheen/ <br/>
+💼 LinkedIn: https://linkedin.com/in/thaju-fakrudheen/ <br/>
 🤗 Hugging Face: https://huggingface.co/spaces/tdcdpd/ <br/>
