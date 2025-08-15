@@ -2,7 +2,7 @@
 
 # 🏍️ Motorcycle Helmet Detection (YOLOv8)
 
-[![Live Demo - Vercel](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen?style=for-the-badge)](https://helmet-detection.vercel.app)
+[![Live Demo - Vercel](https://img.shields.io/badge/Live%20Demo-Vercel-brightgreen?style=for-the-badge)](https://helmet-detection-xi.vercel.app/)
 [![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Space-orange?style=for-the-badge&logo=huggingface)](https://tdcdpd-helmet-detection.hf.space)
 
 ## 📌 Overview
@@ -13,7 +13,7 @@ The system is trained on a public dataset from Roboflow and can process user-upl
 ---
 
 ## 🚀 Live Links
-- **Frontend (React + Vercel)** → [helmet-detection.vercel.app](https://helmet-detection.vercel.app)  
+- **Frontend (React + Vercel)** → [helmet-detection.vercel.app](https://helmet-detection-xi.vercel.app/)  
 - **Backend (Hugging Face Space)** → [tdcdpd-helmet-detection.hf.space](https://tdcdpd-helmet-detection.hf.space)
 
 ---
@@ -50,7 +50,7 @@ The system is trained on a public dataset from Roboflow and can process user-upl
 ## ⚙️ How It Works
 1. **Upload an image** of a motorcycle rider from the React frontend.
 2. The image is sent to the Hugging Face Space running the YOLOv8 model.
-3. The model predicts bounding boxes for **Helmet** and **No Helmet**.
+3. The model predicts bounding boxes for **With Helmet** and **Without Helmet**.
 4. The annotated image is returned to the frontend and displayed.
 
 ---
@@ -61,7 +61,7 @@ The system is trained on a public dataset from Roboflow and can process user-upl
 frontend/      # React UI code
   src/
     App.jsx    # Main UI logic
-    styles.js  # Styling
+    App.css    # Styling
 
 backend/       # Hugging Face Space files
   app.py       # Gradio app
@@ -85,7 +85,7 @@ _To run the front end:_
 
 1. Clone the repo
    ```sh
-   git clone [my repo link]
+   git clone https://github.com/thajucp123/helmet-detection.git
    ```
 3. Install NPM packages
    ```sh
@@ -143,7 +143,69 @@ USE_ROBOFLOW = len(ROBOFLOW_API_KEY) > 0 and len(ROBOFLOW_WORKSPACE) > 0 and len
 print("Using Roboflow:", USE_ROBOFLOW)
 ```
 
-### Here's the Google Colab file for this project: [Colab File](./src\assets\Helmet_NoHelmet_YOLOv8_Colab.ipynb)
+### For 🤗 Hugging Face Space
+
+#### After completing the training, we download the model weight `best.pt` and create the following files for Gradio app:
+
+- `app.py`
+- `requirements.txt`
+- a configuration `Readme.MD`
+
+`app.py`:
+
+```python
+import gradio as gr
+from ultralytics import YOLO
+import cv2
+import numpy as np
+import os
+
+# ✅ Path to your trained weights (make sure best.pt is in the Space files)
+MODEL_PATH = "best.pt"
+model = YOLO(MODEL_PATH)
+
+def predict_image(img):
+    try:
+        # Ensure numpy uint8 RGB format
+        img = np.array(img).astype(np.uint8)
+
+        # Run YOLO inference
+        res = model.predict(source=img, save=False, conf=0.5, imgsz=640)
+
+        # Get first result and render
+        r = res[0]
+        im = r.plot()  # BGR from OpenCV
+        im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)  # Convert to RGB for Gradio
+        
+        return im
+    except Exception as e:
+        print(f"Error during prediction: {e}")
+        return np.zeros((640, 640, 3), dtype=np.uint8)
+
+# ✅ Create Gradio interface
+demo = gr.Interface(
+    fn=predict_image,
+    inputs=gr.Image(type="numpy", label="Upload motorcycle image"),
+    outputs=gr.Image(type="numpy", label="Detections"),
+    title="Motorcycle Helmet Detection (YOLOv8)",
+    description="Detects helmets and no-helmets on motorcyclists using YOLOv8."
+)
+
+if __name__ == "__main__":
+    demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), share=True)
+```
+
+### Here's the Hugging Face space for this project: [Space](https://tdcdpd-helmet-detection.hf.space)
+
+`requirements.tx:`
+
+```sh
+gradio>=5.42.0
+ultralytics>=8.2.0
+opencv-python-headless
+numpy
+```
+
 
 ## ✏️ Note
 
@@ -152,6 +214,7 @@ print("Using Roboflow:", USE_ROBOFLOW)
 ## 📬 Contact
 
 **Author: Thaju**
-📧 Email: thajucp123@gmail.com
-💼 LinkedIn: linkedin.com/in/thaju-fakrudheen/
-🤗 Hugging Face: https://huggingface.co/spaces/tdcdpd/
+
+📧 Email: thajucp123@gmail.com <br/>
+💼 LinkedIn: linkedin.com/in/thaju-fakrudheen/ <br/>
+🤗 Hugging Face: https://huggingface.co/spaces/tdcdpd/ <br/>

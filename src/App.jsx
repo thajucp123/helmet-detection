@@ -1,137 +1,171 @@
 import { useState } from "react";
 import { client } from "https://esm.sh/@gradio/client";
-import './App.css';
+import "./App.css";
 
-const SPACE_URL = import.meta.env.VITE_SPACE_URL;
+const SPACE_URL = import.meta.env.VITE_SPACE_URL || "your-space-url-here";
 
 export default function App() {
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState("");
-  const [resultURL, setResultURL] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [resultUrl, setResultUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [uploadLabel, setUploadLabel] = useState("Click to upload an image");
 
   const onSelect = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    setErr("");
-    setResultURL("");
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+    const url = URL.createObjectURL(f);
+    setPreviewUrl(url);
+    setResultUrl("");
+    setErr("");
+    setUploadLabel(f.name);
   };
 
   const predict = async () => {
-  if (!file) { setErr("Upload an image first."); return; }
-  setLoading(true);
-  setErr("");
-  setResultURL("");
+    if (!file) {
+      setErr("Please upload an image first.");
+      return;
+    }
+    setLoading(true);
+    setErr("");
 
-  try {
-    const app = await client(SPACE_URL);
-    const res = await app.predict("/predict", [file]);
+    try {
+      const app = await client(SPACE_URL);
+      const res = await app.predict("/predict", [file]);
 
-    let outputData = res.data[0];
+      let outputData = res.data[0];
+      let url = "";
 
-    // Case 1: Base64 string
-    if (typeof outputData === "string" && outputData.startsWith("data:image")) {
-      setResultURL(outputData);
+      if (typeof outputData === "string" && outputData.startsWith("data:image")) {
+        url = outputData;
+      } else if (typeof outputData === "string") {
+        url = `data:image/png;base64,${outputData}`;
+      } else if (outputData instanceof Blob) {
+        url = URL.createObjectURL(outputData);
+      } else if (outputData && outputData.url) {
+        url = outputData.url;
+      } else {
+        throw new Error("Unknown output format from API");
+      }
+
+      setResultUrl(url);
+    } catch (e) {
+      console.error("Prediction error:", e);
+      setErr("Prediction failed. Check Space URL or try a smaller image.");
+    } finally {
+      setLoading(false);
     }
-    // Case 2: Raw base64 without prefix
-    else if (typeof outputData === "string") {
-      setResultURL(`data:image/png;base64,${outputData}`);
-    }
-    // Case 3: Blob
-    else if (outputData instanceof Blob) {
-      const url = URL.createObjectURL(outputData);
-      setResultURL(url);
-    }
-    // Case 4: Object with .url property (common in HF Spaces)
-    else if (outputData && outputData.url) {
-      setResultURL(outputData.url);
-    }
-    else {
-      throw new Error("Unknown output format from API");
-    }
-  } catch (e) {
-    console.error(e);
-    setErr("Prediction failed. Check Space URL or try a smaller image.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Motorcycle Helmet Detection</h1>
-        <p style={styles.sub}>YOLOv8 • Custom model (HF Space)</p>
+    <div className="page">
+      <div className="card">
+      <div align="center" className="logo">
+      <img src="./src/assets/icon.png" alt="Logo" width="80" height="80"/>
+      </div>
 
-        <label style={styles.uploader}>
-          <input type="file" accept="image/*" onChange={onSelect} style={{ display: "none" }} />
-          <span>Click to upload an image</span>
-        </label>
+        {/* Header */}
+        <div className="header">
+          <h1 className="header-title">Motorcycle Helmet Detection</h1>
+          <p className="header-sub">Powered by YOLOv8 • Custom model</p>
+        </div>
 
-        {preview && (
-          <div style={styles.row}>
-            <div style={styles.col}>
-              <h3 style={styles.h3}>Input</h3>
-              <img src={preview} alt="input" style={styles.img} />
-            </div>
-            <div style={styles.col}>
-              <h3 style={styles.h3}>Output</h3>
-              {resultURL ? (
-                <img src={resultURL} alt="output" style={styles.img} />
-              ) : (
-                <div style={styles.placeholder}>No result yet</div>
-              )}
-            </div>
+        {/* Main */}
+        <div className="content">
+          {/* Upload */}
+          <div className="upload-center">
+            <label className="file-upload">
+              <input type="file" accept="image/*" className="hidden" onChange={onSelect} />
+              <div className="upload-inner">
+                {/* Upload Icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="icon-10" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span className="upload-title">{uploadLabel}</span>
+                <p className="upload-sub">JPG, PNG accepted</p>
+              </div>
+            </label>
           </div>
-        )}
 
-        <button 
-  onClick={predict} 
-  disabled={!file || loading} 
-  style={{ ...styles.btn, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
->
-  {loading && (
-    <span className="spinner"></span>
-  )}
-  {loading ? "Detecting…" : "Run Detection"}
-</button>
+          {/* Preview + Result */}
+          {previewUrl && (
+            <>
+              <div className="grid-two mb-24">
+                {/* Input */}
+                <div className="section-box">
+                  <h3 className="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="icon small blue" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                    Input Image
+                  </h3>
+                  <div className="img-wrap">
+                    <img src={previewUrl} alt="Preview" className="img" />
+                  </div>
+                </div>
 
+                {/* Output */}
+                <div className="section-box">
+                  <h3 className="section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="icon small green" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    </svg>
+                    Detection Results
+                  </h3>
+                  <div className={"img-wrap"}>
+                    {resultUrl ? (
+                      <img src={resultUrl} alt="Detection result" className="img" />
+                    ) : (
+                      <p className="placeholder-text">No result yet, Run the model</p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-        {err && <div style={styles.err}>{err}</div>}
+          {/* Loading Indicator (separate) */}
+          {loading && (
+            <div className="loading">
+                <span>Processing image...</span>
+            </div>
+          )}
 
-        <div style={styles.footer}>
-          <span>Space: {SPACE_URL}</span>
+              {/* Action Button */}
+              <div className="center">
+                <button className="primary-btn glow-effect" onClick={predict} disabled={loading}>
+                  {loading ? (
+                    <>
+                      <div className="spinner spinner--button" />
+                      <span>Detecting...</span>
+                    </>
+                  ) : (
+                    <span>Run Helmet Detection</span>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Error */}
+          {err && <div className="error">{err}</div>}
+
+        </div>
+
+        {/* Footer */}
+        <div className="footer">
+          <p> 
+          <li>
+          <a href={SPACE_URL} target="_blank" rel="noopener noreferrer" className="space-url">Hugging Face Space</a> 
+          </li>
+          </p>
+          <p> 
+          <li>
+          <a href="https://github.com/thajucp123/helmet-detection.git" target="_blank" rel="noopener noreferrer" className="space-url">Github Repo</a> 
+          </li>
+          </p>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0b1220" },
-  card: { width: "min(900px, 92vw)", background: "#10182b", borderRadius: 16, padding: 24, color: "#eaf0ff", boxShadow: "0 8px 30px rgba(0,0,0,0.3)", display: "flex",
-    flexDirection: "column",
-    alignItems: "center" },
-  title: { margin: 0, fontSize: 28, fontWeight: 700 },
-  sub: { marginTop: 6, opacity: 0.8 },
-  uploader: { marginTop: 16, display: "inline-block", padding: "12px 16px", border: "1px dashed #5f77ff", borderRadius: 10, cursor: "pointer", color: "#cdd6ff" },
-  row: { marginTop: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
-  col: { background: "#0d1424", borderRadius: 12, padding: 12, border: "1px solid #1b2440" },
-  h3: { margin: "4px 0 10px 0", fontWeight: 600, fontSize: 16 },
-  img: { width: "100%", borderRadius: 8, border: "1px solid #1b2440" },
-  placeholder: { height: 280, display: "flex", alignItems: "center", justifyContent: "center", color: "#7f8bb3", border: "1px dashed #26345d", borderRadius: 8 },
-  btn: { marginTop: 16, background: "#5f77ff", color: "#fff", border: "none", padding: "12px 16px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
-  err: { marginTop: 12, color: "#ff7b7b" },
-  footer: { marginTop: 14, opacity: 0.7, fontSize: 12 },
-  spinner: {
-  width: 16,
-  height: 16,
-  border: "2px solid rgba(255,255,255,0.4)",
-  borderTopColor: "#fff",
-  borderRadius: "50%",
-  animation: "spin 0.8s linear infinite"
-}
-};
