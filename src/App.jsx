@@ -72,6 +72,16 @@ export default function App() {
     }
   };
 
+  // for the reset button
+  const handleReset = () => {
+    setFile(null);
+    setResultUrl("");
+    setDetectionSummary("");
+    setErr("");
+    setPreviewUrl("");
+  };
+  
+
   return (
     <div className="page">
       <div className="card">
@@ -152,6 +162,15 @@ export default function App() {
 
               {/* Action Button */}
               <div className="center">
+              {previewUrl && (
+  <button 
+    onClick={handleReset} 
+    className="reset-btn reset-glow-effect"
+  >
+    Reset
+  </button>
+)}
+
                 <button className="primary-btn glow-effect" onClick={predict} disabled={loading}>
                   {loading ? (
                     <>
