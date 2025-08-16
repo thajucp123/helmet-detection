@@ -12,6 +12,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [uploadLabel, setUploadLabel] = useState("Click to upload an image");
+  const [detectionSummary, setDetectionSummary] = useState("");
 
   const onSelect = (e) => {
     const f = e.target.files?.[0];
@@ -35,10 +36,11 @@ export default function App() {
     try {
       const app = await client(SPACE_URL);
       const res = await app.predict("/predict", [file]);
-
+    
+      // ✅ First output: annotated image
       let outputData = res.data[0];
       let url = "";
-
+    
       if (typeof outputData === "string" && outputData.startsWith("data:image")) {
         url = outputData;
       } else if (typeof outputData === "string") {
@@ -50,8 +52,18 @@ export default function App() {
       } else {
         throw new Error("Unknown output format from API");
       }
-
+    
       setResultUrl(url);
+    
+      // ✅ Second output: detection JSON (summary + detections)
+      const detectionInfo = res.data[1];
+      console.log(detectionInfo);
+      if (detectionInfo && detectionInfo.summary) {
+        setDetectionSummary(detectionInfo.summary);
+      } else {
+        setDetectionSummary("No detections found.");
+      }
+    
     } catch (e) {
       console.error("Prediction error:", e);
       setErr("Prediction failed. Try again or try with a smaller image.");
@@ -124,6 +136,12 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {detectionSummary && (
+  <div className="detection-summary">
+    <p>Detected {detectionSummary}</p>
+  </div>
+)}
 
           {/* Loading Indicator (separate) */}
           {loading && (
