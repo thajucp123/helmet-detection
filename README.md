@@ -176,23 +176,55 @@ def predict_image(img):
         r = res[0]
         im = r.plot()  # BGR from OpenCV
         im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)  # Convert to RGB for Gradio
-        
-        return im
+
+        # Extract detection info
+        detections = []
+        for box in r.boxes:
+            cls_id = int(box.cls)
+            cls_name = r.names[cls_id]
+            conf = float(box.conf)
+            detections.append({"class": cls_name, "confidence": round(conf, 2)})
+
+        # Count helmets vs no-helmets
+        helmet_count = sum(1 for d in detections if d["class"].lower() == "with helmet")
+        no_helmet_count = sum(1 for d in detections if "without" in d["class"].lower())
+
+        summary = f"✅ Helmets: {helmet_count}, ❌ No-helmets: {no_helmet_count}" if detections else "No detections found."
+
+        return im, {"detections": detections, "summary": summary}
     except Exception as e:
         print(f"Error during prediction: {e}")
-        return np.zeros((640, 640, 3), dtype=np.uint8)
+        return np.zeros((640, 640, 3), dtype=np.uint8), {"detections": [], "summary": "Error during prediction"}
 
 # ✅ Create Gradio interface
 demo = gr.Interface(
     fn=predict_image,
     inputs=gr.Image(type="numpy", label="Upload motorcycle image"),
-    outputs=gr.Image(type="numpy", label="Detections"),
+    outputs=[
+        gr.Image(type="numpy", label="Detections"),
+        gr.JSON(label="Detection Details")
+    ],
     title="Motorcycle Helmet Detection (YOLOv8)",
     description="Detects helmets and no-helmets on motorcyclists using YOLOv8."
 )
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)), share=True)
+
+```
+
+**Our Hugging Face Gradio app will now return the following outputs:**
+- res.data[0] → annotated image
+- res.data[1] → JSON like:
+
+```json
+{
+  "detections": [
+    {"class": "helmet", "confidence": 0.92},
+    {"class": "no-helmet", "confidence": 0.87}
+  ],
+  "summary": "✅ Helmets: 1, ❌ No-helmets: 1"
+}
 ```
 
 ### Here's the Hugging Face space for this project: [Space](https://tdcdpd-helmet-detection.hf.space)
