@@ -54,7 +54,7 @@ export default function App() {
       setResultUrl(url);
     } catch (e) {
       console.error("Prediction error:", e);
-      setErr("Prediction failed. Check Space URL or try a smaller image.");
+      setErr("Prediction failed. Try again or try with a smaller image.");
     } finally {
       setLoading(false);
     }
