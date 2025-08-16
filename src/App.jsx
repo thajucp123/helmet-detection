@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { client } from "https://esm.sh/@gradio/client";
 import "./App.css";
+import logoImage from "./assets/icon.png";
 
 const SPACE_URL = import.meta.env.VITE_SPACE_URL || "your-space-url-here";
 
@@ -20,7 +21,7 @@ export default function App() {
     setPreviewUrl(url);
     setResultUrl("");
     setErr("");
-    setUploadLabel(f.name);
+    setUploadLabel(f.name.length > 16 ? `${f.name.substring(0, 16)}...` : f.name); //setting the label to the file name only up to 6 character length
   };
 
   const predict = async () => {
@@ -63,7 +64,7 @@ export default function App() {
     <div className="page">
       <div className="card">
       <div align="center" className="logo">
-      <img src="./src/assets/icon.png" alt="Logo" width="80" height="80"/>
+      <img src={logoImage} alt="Logo" width="80" height="80"/>
       </div>
 
         {/* Header */}
@@ -118,7 +119,7 @@ export default function App() {
                     {resultUrl ? (
                       <img src={resultUrl} alt="Detection result" className="img" />
                     ) : (
-                      <p className="placeholder-text">No result yet, Run the model</p>
+                      <p className="placeholder-text">{loading ? "Running the model...Please wait..." : "No result yet, Run the model"}</p>
                     )}
                   </div>
                 </div>
