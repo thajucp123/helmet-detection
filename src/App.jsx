@@ -162,7 +162,7 @@ export default function App() {
 
               {/* Action Button */}
               <div className="center">
-              {previewUrl && (
+              {(previewUrl && resultUrl) && (
   <button 
     onClick={handleReset} 
     className="reset-btn reset-glow-effect"
